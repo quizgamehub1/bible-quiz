@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Quiz Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .progress-container {
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 5px;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            background: #FFD700;
+            height: 15px;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .game-content {
+            padding: 40px;
+        }
+
+        .level-selection {
+            text-align: center;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .level-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 25px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .level-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .level-card.completed {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .level-card.locked {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .quiz-container {
+            display: none;
+        }
+
+        .question-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .question {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .answers {
+            display: grid;
+            gap: 15px;
+        }
+
+        .answer-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .answer-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: translateX(5px);
+        }
+
+        .answer-btn.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .answer-btn.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .answer-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-container {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .result-score {
+            font-size: 3em;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        .result-message {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .celebration {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .achievements-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .achievement {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .achievement.unlocked {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+        }
+
+        .achievement-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+
+        .final-victory {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .bonus-unlock {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .game-content {
+                padding: 20px;
+            }
+            
+            .levels-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 15px;
+            }
+            
+            .question {
+                font-size: 1.1em;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>📖 Bible Quiz Game</h1>
+            <p>Test your knowledge of the Holy Scripture</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="overallProgress"></div>
+            </div>
+        </div>
+
+        <div class="game-content">
+            <!-- Level Selection Screen -->
+            <div class="level-selection" id="levelSelection">
+                <h2>Choose Your Level</h2>
+                
+                <!-- Final Victory Screen -->
+                <div class="final-victory" id="finalVictory">
+                    <h2>🎉 BIBLE MASTER ACHIEVED! 🎉</h2>
+                    <p>Congratulations! You have completed all Bible levels and demonstrated exceptional knowledge of God's Word!</p>
+                    <div class="stats-container" id="finalStats"></div>
+                    <p style="font-style: italic; margin-top: 20px;">"Your word is a lamp for my feet, a light on my path." - Psalm 119:105</p>
+                </div>
+                
+                <!-- Achievements Section -->
+                <div class="achievements-container" id="achievementsContainer" style="display: none;">
+                    <h3>🏆 Achievements</h3>
+                    <div id="achievementsList"></div>
+                </div>
+                
+                <!-- Bonus Level Unlock -->
+                <div class="bonus-unlock" id="bonusUnlock" style="display: none;">
+                    🌟 BONUS LEVEL UNLOCKED: Bible Master Challenge! 🌟
+                </div>
+                
+                <div class="levels-grid" id="levelsGrid"></div>
+                
+                <div class="controls" style="margin-top: 30px;">
+                    <button class="btn" onclick="showAchievements()" id="achievementsBtn">🏆 Achievements</button>
+                    <button class="btn" onclick="showStats()" id="statsBtn">📊 Statistics</button>
+                    <button class="btn" onclick="resetGame()" style="background: #dc3545;">🔄 Reset Game</button>
+                </div>
+            </div>
+
+            <!-- Quiz Screen -->
+            <div class="quiz-container" id="quizContainer">
+                <div class="stats">
+                    <span>Level: <span id="currentLevel">1</span></span>
+                    <span>Question: <span id="currentQuestion">1</span>/10</span>
+                    <span>Score: <span id="currentScore">0</span>/10</span>
+                </div>
+
+                <div class="question-container fade-in">
+                    <div class="question" id="questionText"></div>
+                    <div class="answers" id="answersContainer"></div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>Next Question</button>
+                    <button class="btn" onclick="backToLevels()">Back to Levels</button>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div class="result-container" id="resultContainer">
+                <div class="celebration" id="celebrationEmoji">🎉</div>
+                <div class="result-score" id="finalScore"></div>
+                <div class="result-message" id="resultMessage"></div>
+                <div class="controls">
+                    <button class="btn" onclick="retryLevel()">Retry Level</button>
+                    <button class="btn" onclick="backToLevels()">Back to Levels</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let currentLevelIndex = 0;
+        let currentQuestionIndex = 0;
+        let currentScore = 0;
+        let completedLevels = JSON.parse(localStorage.getItem('biblequiz_completed') || '[]');
+        let achievements = JSON.parse(localStorage.getItem('biblequiz_achievements') || '[]');
+        let gameStats = JSON.parse(localStorage.getItem('biblequiz_stats') || '{"totalQuestions": 0, "totalCorrect": 0, "perfectLevels": 0}');
+
+        // Bible Quiz Questions - 15 Levels with sample questions
+        const quizData = [
+            {
+                level: 1,
+                title: "Genesis & Creation",
+                questions: [
+                    {
+                        question: "How many days did God take to create the world?",
+                        answers: ["6 days", "7 days", "5 days", "8 days"],
+                        correct: 0
+                    },
+                    {
+    question: "What did God create on the first day?",
+    answers: ["Light", "Heaven and Earth", "Plants", "Animals"],
+    correct: 0
+},
+{
+    question: "From what did God form man?",
+    answers: ["Water", "Fire", "Dust of the ground", "Clay"],
+    correct: 2
+},
+{
+    question: "What was the name of the first woman?",
+    answers: ["Mary", "Sarah", "Eve", "Rachel"],
+    correct: 2
+},
+{
+    question: "What tree were Adam and Eve forbidden to eat from?",
+    answers: ["Tree of Life", "Tree of Knowledge of Good and Evil", "Apple Tree", "Fig Tree"],
+    correct: 1
+},
+{
+    question: "Who was the first murderer?",
+    answers: ["Abel", "Cain", "Seth", "Enoch"],
+    correct: 1
+},
+{
+    question: "How old was Adam when he died?",
+    answers: ["930 years", "969 years", "777 years", "800 years"],
+    correct: 0
+},
+{
+    question: "What was the sign of God's covenant with Noah?",
+    answers: ["A dove", "A rainbow", "An olive branch", "A mountain"],
+    correct: 1
+},
+{
+    question: "What did God create on the fourth day?",
+    answers: ["Fish and birds", "Sun, moon and stars", "Land animals", "Plants"],
+    correct: 1
+},
+{
+    question: "Which son of Adam and Eve replaced Abel?",
+    answers: ["Cain", "Seth", "Enoch", "Lamech"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 2,
+                title: "Noah & The Flood",
+                questions: [
+                    {
+                        question: "How many of each clean animal did Noah take into the ark?",
+                        answers: ["Two", "Seven pairs", "One pair", "Three pairs"],
+                        correct: 1
+                    },
+                    {
+    question: "How long did it rain during the flood?",
+    answers: ["30 days and nights", "40 days and nights", "50 days and nights", "60 days and nights"],
+    correct: 1
+},
+{
+    question: "What kind of wood was the ark made from?",
+    answers: ["Cedar", "Oak", "Gopher wood", "Pine"],
+    correct: 2
+},
+{
+    question: "How many people were saved in the ark?",
+    answers: ["6", "7", "8", "9"],
+    correct: 2
+},
+{
+    question: "What did the dove bring back to Noah?",
+    answers: ["A twig", "An olive leaf", "A flower", "Nothing"],
+    correct: 1
+},
+{
+    question: "How long was Noah in the ark?",
+    answers: ["40 days", "100 days", "150 days", "Over a year"],
+    correct: 3
+},
+{
+    question: "What was the first thing Noah did after leaving the ark?",
+    answers: ["Built a house", "Planted a vineyard", "Built an altar", "Looked for food"],
+    correct: 2
+},
+{
+    question: "How old was Noah when the flood came?",
+    answers: ["500 years", "600 years", "700 years", "800 years"],
+    correct: 1
+},
+{
+    question: "What did Noah send out first to test if the waters had receded?",
+    answers: ["A dove", "A raven", "An eagle", "A sparrow"],
+    correct: 1
+},
+{
+    question: "What did God promise never to do again after the flood?",
+    answers: ["Send rain", "Destroy the earth by water", "Be angry", "Create animals"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 3,
+                title: "Abraham & The Patriarchs",
+                questions: [
+                    {
+                        question: "What was Abraham's name before God changed it?",
+                        answers: ["Abram", "Isaac", "Jacob", "Joseph"],
+                        correct: 0
+                    },
+                    {
+    question: "Where was Abraham originally from?",
+    answers: ["Egypt", "Canaan", "Ur of the Chaldeans", "Babylon"],
+    correct: 2
+},
+{
+    question: "What was Sarah's original name?",
+    answers: ["Sarai", "Rebekah", "Rachel", "Leah"],
+    correct: 0
+},
+{
+    question: "How old was Abraham when Isaac was born?",
+    answers: ["75", "90", "100", "110"],
+    correct: 2
+},
+{
+    question: "Who did Isaac marry?",
+    answers: ["Rachel", "Leah", "Rebekah", "Sarah"],
+    correct: 2
+},
+{
+    question: "What did Jacob's name become?",
+    answers: ["Abraham", "Isaac", "Israel", "Judah"],
+    correct: 2
+},
+{
+    question: "How many sons did Jacob have?",
+    answers: ["10", "11", "12", "13"],
+    correct: 2
+},
+{
+    question: "Which son did Abraham almost sacrifice?",
+    answers: ["Ishmael", "Isaac", "Jacob", "Joseph"],
+    correct: 1
+},
+{
+    question: "Who was Jacob's favorite wife?",
+    answers: ["Leah", "Rachel", "Bilhah", "Zilpah"],
+    correct: 1
+},
+{
+    question: "What did Abraham do when three visitors came to him?",
+    answers: ["Ignored them", "Fed them", "Sent them away", "Asked for money"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 4,
+                title: "Moses & The Exodus",
+                questions: [
+                    {
+                        question: "How many plagues did God send upon Egypt?",
+                        answers: ["7", "12", "10", "9"],
+                        correct: 2
+                    },
+                    {
+    question: "In which country was Moses born?",
+    answers: ["Canaan", "Egypt", "Babylon", "Assyria"],
+    correct: 1
+},
+{
+    question: "Who found baby Moses in the river?",
+    answers: ["His mother", "Pharaoh's daughter", "A servant", "His sister"],
+    correct: 1
+},
+{
+    question: "What sign did God show Moses in the burning bush?",
+    answers: ["A rainbow", "His staff became a serpent", "Fire from heaven", "A voice"],
+    correct: 1
+},
+{
+    question: "What was the first plague God sent on Egypt?",
+    answers: ["Frogs", "Lice", "Water turned to blood", "Darkness"],
+    correct: 2
+},
+{
+    question: "What was the last plague before Pharaoh let the Israelites go?",
+    answers: ["Darkness", "Hail", "Death of firstborn", "Locusts"],
+    correct: 2
+},
+{
+    question: "How many years did the Israelites wander in the wilderness?",
+    answers: ["30", "40", "50", "70"],
+    correct: 1
+},
+{
+    question: "What did God provide for the Israelites to eat in the wilderness?",
+    answers: ["Bread", "Manna", "Fish", "Fruit"],
+    correct: 1
+},
+{
+    question: "Who was Moses' brother and spokesperson?",
+    answers: ["Joshua", "Caleb", "Aaron", "Hur"],
+    correct: 2
+},
+{
+    question: "How old was Moses when he died?",
+    answers: ["110", "120", "130", "140"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 5,
+                title: "The Ten Commandments",
+                questions: [
+                    {
+                        question: "On which mountain did Moses receive the Ten Commandments?",
+                        answers: ["Mount Ararat", "Mount Sinai", "Mount Nebo", "Mount Carmel"],
+                        correct: 1
+                    },
+                    {
+    question: "On what were the Ten Commandments written?",
+    answers: ["Paper", "Stone tablets", "Wood", "Metal plates"],
+    correct: 1
+},
+{
+    question: "What is the first commandment?",
+    answers: ["Do not kill", "Honor your parents", "You shall have no other gods", "Do not steal"],
+    correct: 2
+},
+{
+    question: "Which commandment is about honoring parents?",
+    answers: ["Fourth", "Fifth", "Sixth", "Seventh"],
+    correct: 1
+},
+{
+    question: "What does the fourth commandment tell us to remember?",
+    answers: ["God's love", "The Sabbath day", "Our parents", "The poor"],
+    correct: 1
+},
+{
+    question: "How many commandments deal with our relationship with God?",
+    answers: ["3", "4", "5", "6"],
+    correct: 1
+},
+{
+    question: "What happened to the first set of stone tablets?",
+    answers: ["Moses kept them", "Moses broke them", "They were stolen", "They were lost"],
+    correct: 1
+},
+{
+    question: "Who wrote the Ten Commandments?",
+    answers: ["Moses", "Aaron", "God", "Joshua"],
+    correct: 2
+},
+{
+    question: "What does the eighth commandment forbid?",
+    answers: ["Murder", "Adultery", "Stealing", "Lying"],
+    correct: 2
+},
+{
+    question: "Which commandment is about coveting?",
+    answers: ["Eighth", "Ninth", "Tenth", "Seventh"],
+    correct: 2
+}
+                ]
+            },
+            {
+                level: 6,
+                title: "Joshua & The Promised Land",
+                questions: [
+                    {
+                        question: "Which city's walls fell down after the Israelites marched around it?",
+                        answers: ["Jerusalem", "Jericho", "Bethlehem", "Gaza"],
+                        correct: 1
+                    },
+                    {
+    question: "Who was Joshua's mentor?",
+    answers: ["Aaron", "Moses", "Caleb", "Hur"],
+    correct: 1
+},
+{
+    question: "How many times did the Israelites march around Jericho on the seventh day?",
+    answers: ["Once", "Three times", "Six times", "Seven times"],
+    correct: 3
+},
+{
+    question: "What happened when the Israelites shouted at Jericho?",
+    answers: ["Nothing", "The walls fell down", "It started raining", "The enemy surrendered"],
+    correct: 1
+},
+{
+    question: "Who hid the Israelite spies in Jericho?",
+    answers: ["Rahab", "Ruth", "Naomi", "Deborah"],
+    correct: 0
+},
+{
+    question: "What did Rahab hang from her window as a sign?",
+    answers: ["White cloth", "Red cord", "Blue ribbon", "Yellow flag"],
+    correct: 1
+},
+{
+    question: "How many spies did Joshua send to Jericho?",
+    answers: ["Two", "Three", "Ten", "Twelve"],
+    correct: 0
+},
+{
+    question: "What river did the Israelites cross to enter the Promised Land?",
+    answers: ["Nile", "Euphrates", "Jordan", "Red Sea"],
+    correct: 2
+},
+{
+    question: "What miracle happened when they crossed the river?",
+    answers: ["It turned to blood", "The waters parted", "Fish appeared", "It dried up"],
+    correct: 1
+},
+{
+    question: "How did Joshua die?",
+    answers: ["In battle", "Of old age", "Disease", "Accident"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 7,
+                title: "Judges & Kings",
+                questions: [
+                    {
+                        question: "Who was the strongest judge of Israel?",
+                        answers: ["Gideon", "Samson", "Deborah", "Samuel"],
+                        correct: 1
+                    },
+                    {
+    question: "Who was the first king of Israel?",
+    answers: ["David", "Solomon", "Saul", "Samuel"],
+    correct: 2
+},
+{
+    question: "What was Samson's source of strength?",
+    answers: ["His muscles", "His hair", "His sword", "God's spirit"],
+    correct: 1
+},
+{
+    question: "Who cut Samson's hair?",
+    answers: ["Delilah", "His mother", "A Philistine", "His enemy"],
+    correct: 0
+},
+{
+    question: "Which judge defeated 300 men with only 300 of his own?",
+    answers: ["Samson", "Gideon", "Jephthah", "Barak"],
+    correct: 1
+},
+{
+    question: "Who was the female judge who led Israel?",
+    answers: ["Ruth", "Esther", "Deborah", "Hannah"],
+    correct: 2
+},
+{
+    question: "What did Gideon use to test God's will?",
+    answers: ["A stone", "A fleece", "Water", "Fire"],
+    correct: 1
+},
+{
+    question: "Who anointed Saul as king?",
+    answers: ["Moses", "Joshua", "Samuel", "Aaron"],
+    correct: 2
+},
+{
+    question: "Why did God reject Saul as king?",
+    answers: ["He was too young", "He disobeyed God", "He was weak", "He was afraid"],
+    correct: 1
+},
+{
+    question: "How long did each judge typically rule Israel?",
+    answers: ["It varied", "20 years", "40 years", "70 years"],
+    correct: 0
+}
+                ]
+            },
+            {
+                level: 8,
+                title: "David & Solomon",
+                questions: [
+                    {
+                        question: "What instrument did David play?",
+                        answers: ["Flute", "Trumpet", "Harp", "Drums"],
+                        correct: 2
+                    },
+                    {
+    question: "How many stones did David pick up to fight Goliath?",
+    answers: ["Three", "Five", "Seven", "One"],
+    correct: 1
+},
+{
+    question: "What was Goliath's height approximately?",
+    answers: ["7 feet", "8 feet", "9 feet", "10 feet"],
+    correct: 2
+},
+{
+    question: "Who was David's best friend?",
+    answers: ["Solomon", "Jonathan", "Samuel", "Nathan"],
+    correct: 1
+},
+{
+    question: "Which of David's sons rebelled against him?",
+    answers: ["Solomon", "Absalom", "Amnon", "Adonijah"],
+    correct: 1
+},
+{
+    question: "What did Solomon ask God for?",
+    answers: ["Riches", "Long life", "Wisdom", "Power"],
+    correct: 2
+},
+{
+    question: "How many wives did Solomon have?",
+    answers: ["100", "500", "700", "1000"],
+    correct: 2
+},
+{
+    question: "What famous building did Solomon construct?",
+    answers: ["A palace", "The Temple", "A tower", "A wall"],
+    correct: 1
+},
+{
+    question: "How many years did it take to build Solomon's Temple?",
+    answers: ["5 years", "7 years", "10 years", "20 years"],
+    correct: 1
+},
+{
+    question: "What led to Solomon's downfall?",
+    answers: ["Pride", "Idolatry", "Greed", "War"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 9,
+                title: "Prophets & Prophecies",
+                questions: [
+                    {
+                        question: "Which prophet was swallowed by a great fish?",
+                        answers: ["Elijah", "Elisha", "Jonah", "Isaiah"],
+                        correct: 2
+                    },
+                    {
+    question: "How many days was Jonah in the belly of the fish?",
+    answers: ["One", "Two", "Three", "Seven"],
+    correct: 2
+},
+{
+    question: "To which city was Jonah sent to preach?",
+    answers: ["Babylon", "Jerusalem", "Nineveh", "Damascus"],
+    correct: 2
+},
+{
+    question: "Which prophet confronted King Ahab?",
+    answers: ["Elisha", "Elijah", "Isaiah", "Jeremiah"],
+    correct: 1
+},
+{
+    question: "How was Elijah taken up to heaven?",
+    answers: ["In a cloud", "By angels", "In a whirlwind", "He walked up"],
+    correct: 2
+},
+{
+    question: "Who succeeded Elijah as prophet?",
+    answers: ["Isaiah", "Jeremiah", "Elisha", "Ezekiel"],
+    correct: 2
+},
+{
+    question: "Which prophet interpreted dreams for kings?",
+    answers: ["Daniel", "Ezekiel", "Hosea", "Joel"],
+    correct: 0
+},
+{
+    question: "How many friends visited Job during his suffering?",
+    answers: ["Two", "Three", "Four", "Five"],
+    correct: 1
+},
+{
+    question: "Which prophet was called while he was still a young man?",
+    answers: ["Isaiah", "Jeremiah", "Ezekiel", "Daniel"],
+    correct: 1
+},
+{
+    question: "What did Isaiah see in his vision of God?",
+    answers: ["Angels", "Cherubim", "Seraphim", "Archangels"],
+    correct: 2
+}
+                ]
+            },
+            {
+                level: 10,
+                title: "Birth of Jesus",
+                questions: [
+                    {
+                        question: "In which city was Jesus born?",
+                        answers: ["Nazareth", "Jerusalem", "Bethlehem", "Capernaum"],
+                        correct: 2
+                    },
+                    {
+    question: "Who was Jesus' earthly father?",
+    answers: ["Joseph", "Zacharias", "Simeon", "David"],
+    correct: 0
+},
+{
+    question: "What was the name of the angel who announced Jesus' birth to Mary?",
+    answers: ["Michael", "Gabriel", "Raphael", "Uriel"],
+    correct: 1
+},
+{
+    question: "Where did Mary and Joseph travel from to get to Bethlehem?",
+    answers: ["Jerusalem", "Nazareth", "Capernaum", "Galilee"],
+    correct: 1
+},
+{
+    question: "Why did Mary and Joseph go to Bethlehem?",
+    answers: ["To visit family", "For the census", "To find work", "To escape Herod"],
+    correct: 1
+},
+{
+    question: "Where was Jesus born?",
+    answers: ["In a house", "In a stable", "In an inn", "In a temple"],
+    correct: 1
+},
+{
+    question: "Who were the first to hear about Jesus' birth?",
+    answers: ["Wise men", "Shepherds", "Priests", "Angels"],
+    correct: 1
+},
+{
+    question: "What did the shepherds find Jesus lying in?",
+    answers: ["A cradle", "A manger", "A basket", "On hay"],
+    correct: 1
+},
+{
+    question: "How many wise men came to see Jesus?",
+    answers: ["Two", "Three", "The Bible doesn't say", "Twelve"],
+    correct: 2
+},
+{
+    question: "What gifts did the wise men bring?",
+    answers: ["Gold, silver, bronze", "Gold, frankincense, myrrh", "Food, clothing, money", "Sheep, cattle, grain"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 11,
+                title: "Jesus' Ministry",
+                questions: [
+                    {
+                        question: "How many disciples did Jesus choose?",
+                        answers: ["10", "11", "12", "13"],
+                        correct: 2
+                    },
+                    {
+    question: "At what age did Jesus begin his public ministry?",
+    answers: ["25", "30", "33", "35"],
+    correct: 1
+},
+{
+    question: "Who baptized Jesus?",
+    answers: ["Peter", "John the Baptist", "John the Apostle", "Andrew"],
+    correct: 1
+},
+{
+    question: "How long did Jesus fast in the wilderness?",
+    answers: ["30 days", "40 days", "50 days", "70 days"],
+    correct: 1
+},
+{
+    question: "What was Jesus' first miracle?",
+    answers: ["Healing a blind man", "Feeding 5000", "Turning water to wine", "Walking on water"],
+    correct: 2
+},
+{
+    question: "Where did Jesus perform his first miracle?",
+    answers: ["Capernaum", "Nazareth", "Cana", "Jerusalem"],
+    correct: 2
+},
+{
+    question: "Which disciple walked on water with Jesus?",
+    answers: ["John", "James", "Peter", "Andrew"],
+    correct: 2
+},
+{
+    question: "What was Jesus' hometown?",
+    answers: ["Bethlehem", "Jerusalem", "Capernaum", "Nazareth"],
+    correct: 3
+},
+{
+    question: "Which disciple was a tax collector?",
+    answers: ["Matthew", "Luke", "Mark", "Thomas"],
+    correct: 0
+},
+{
+    question: "What did Jesus say he came to do?",
+    answers: ["Rule as king", "Seek and save the lost", "Teach in temples", "Defeat enemies"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 12,
+                title: "Miracles of Jesus",
+                questions: [
+                    {
+                        question: "How many loaves and fishes did Jesus use to feed the 5000?",
+                        answers: ["3 loaves, 4 fishes", "5 loaves, 2 fishes", "7 loaves, 3 fishes", "4 loaves, 6 fishes"],
+                        correct: 1
+                    },
+                    {
+    question: "How many baskets of leftovers were collected after feeding the 5000?",
+    answers: ["7", "10", "12", "15"],
+    correct: 2
+},
+{
+    question: "What did Jesus heal the man at the pool of Bethesda from?",
+    answers: ["Blindness", "Paralysis", "Leprosy", "Deafness"],
+    correct: 1
+},
+{
+    question: "How long had the paralyzed man been sick?",
+    answers: ["18 years", "25 years", "38 years", "40 years"],
+    correct: 2
+},
+{
+    question: "What did Jesus put on the blind man's eyes?",
+    answers: ["Water", "Oil", "Clay and spit", "His hands"],
+    correct: 2
+},
+{
+    question: "Who did Jesus raise from the dead after four days?",
+    answers: ["Jairus' daughter", "Lazarus", "The widow's son", "A centurion's servant"],
+    correct: 1
+},
+{
+    question: "What did Jesus calm during a storm?",
+    answers: ["The disciples", "The sea", "The wind", "Both sea and wind"],
+    correct: 3
+},
+{
+    question: "How many lepers did Jesus heal, but only one returned to thank him?",
+    answers: ["Five", "Seven", "Ten", "Twelve"],
+    correct: 2
+},
+{
+    question: "What happened to Jesus' clothes during the Transfiguration?",
+    answers: ["They disappeared", "They became white as light", "They turned gold", "They became colorful"],
+    correct: 1
+},
+{
+    question: "Who appeared with Jesus during the Transfiguration?",
+    answers: ["Abraham and Isaac", "Moses and Elijah", "David and Solomon", "Peter and John"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 13,
+                title: "Parables of Jesus",
+                questions: [
+                    {
+                        question: "In the parable of the Good Samaritan, who helped the injured man?",
+                        answers: ["A priest", "A Levite", "A Samaritan", "A tax collector"],
+                        correct: 2
+                    },
+                    {
+    question: "In the parable of the lost sheep, how many sheep did the shepherd have?",
+    answers: ["50", "75", "99", "100"],
+    correct: 3
+},
+{
+    question: "What did the prodigal son ask his father for?",
+    answers: ["A job", "His inheritance", "Forgiveness", "Food"],
+    correct: 1
+},
+{
+    question: "What job did the prodigal son end up doing?",
+    answers: ["Farming", "Feeding pigs", "Building houses", "Fishing"],
+    correct: 1
+},
+{
+    question: "In the parable of the sower, what happened to seed on rocky ground?",
+    answers: ["Birds ate it", "It withered", "It grew well", "It was choked"],
+    correct: 1
+},
+{
+    question: "What did the wise virgins have that the foolish ones didn't?",
+    answers: ["Money", "Food", "Oil for their lamps", "Wedding clothes"],
+    correct: 2
+},
+{
+    question: "In the parable of the talents, how many talents did the first servant receive?",
+    answers: ["Three", "Five", "Seven", "Ten"],
+    correct: 1
+},
+{
+    question: "What did the servant with one talent do with it?",
+    answers: ["Invested it", "Spent it", "Buried it", "Lost it"],
+    correct: 2
+},
+{
+    question: "What did the Good Samaritan do for the injured man?",
+    answers: ["Prayed for him", "Gave him money", "Took him to an inn", "Called for help"],
+    correct: 2
+},
+{
+    question: "How much did the Good Samaritan pay the innkeeper?",
+    answers: ["One denarius", "Two denarii", "Five denarii", "Ten denarii"],
+    correct: 1
+}
+                ]
+            },
+            {
+                level: 14,
+                title: "Crucifixion & Resurrection",
+                questions: [
+                    {
+                        question: "On which day of the week did Jesus rise from the dead?",
+                        answers: ["Friday", "Saturday", "Sunday", "Monday"],
+                        correct: 2
+                    },
+                    {
+    question: "Who betrayed Jesus?",
+    answers: ["Peter", "John", "Judas", "Thomas"],
+    correct: 2
+},
+{
+    question: "For how much money was Jesus betrayed?",
+    answers: ["20 pieces of silver", "30 pieces of silver", "40 pieces of silver", "50 pieces of silver"],
+    correct: 1
+},
+{
+    question: "What did Jesus pray in the Garden of Gethsemane?",
+    answers: ["For strength", "Not my will, but yours", "For his disciples", "For forgiveness"],
+    correct: 1
+},
+{
+    question: "Who denied Jesus three times?",
+    answers: ["John", "James", "Peter", "Andrew"],
+    correct: 2
+},
+{
+    question: "What happened to the temple curtain when Jesus died?",
+    answers: ["It caught fire", "It was torn in two", "It fell down", "Nothing"],
+    correct: 1
+},
+{
+    question: "What time of day did Jesus die?",
+    answers: ["Morning", "Noon", "Afternoon", "Evening"],
+    correct: 2
+},
+{
+    question: "Who helped carry Jesus' cross?",
+    answers: ["Peter", "John", "Simon of Cyrene", "Joseph"],
+    correct: 2
+},
+{
+    question: "Who first discovered the empty tomb?",
+    answers: ["Peter", "John", "Mary Magdalene", "The disciples"],
+    correct: 2
+},
+{
+    question: "How many days was Jesus in the tomb?",
+    answers: ["One", "Two", "Three", "Four"],
+    correct: 2
+}
+                ]
+            },
+            {
+                level: 15,
+                title: "Early Church & Apostles",
+                questions: [
+                    {
+                        question: "Which apostle wrote the most books in the New Testament?",
+                        answers: ["Peter", "John", "Paul", "James"],
+                        correct: 2
+                    },
+                    {
+    question: "What happened on the Day of Pentecost?",
+    answers: ["Jesus ascended", "Holy Spirit came", "Temple was destroyed", "Peter was arrested"],
+    correct: 1
+},
+{
+    question: "How many people were baptized on the Day of Pentecost?",
+    answers: ["1000", "2000", "3000", "5000"],
+    correct: 2
+},
+{
+    question: "Who was the first Christian martyr?",
+    answers: ["James", "Stephen", "Peter", "Paul"],
+    correct: 1
+},
+{
+    question: "What was Paul's name before his conversion?",
+    answers: ["Simon", "Saul", "Samuel", "Solomon"],
+    correct: 1
+},
+{
+    question: "On which road did Paul encounter Jesus?",
+    answers: ["Road to Jerusalem", "Road to Damascus", "Road to Rome", "Road to Antioch"],
+    correct: 1
+},
+{
+    question: "How many missionary journeys did Paul make?",
+    answers: ["Two", "Three", "Four", "Five"],
+    correct: 1
+},
+{
+    question: "Which apostle was known as 'the beloved disciple'?",
+    answers: ["Peter", "James", "John", "Andrew"],
+    correct: 2
+},
+{
+    question: "Who replaced Judas as the twelfth apostle?",
+    answers: ["Paul", "Barnabas", "Matthias", "Timothy"],
+    correct: 2
+},
+{
+    question: "In which city were followers first called 'Christians'?",
+    answers: ["Jerusalem", "Rome", "Antioch", "Corinth"],
+    correct: 2
+}
+                ]
+            },
+            // Bonus Level - Unlocked after completing all 15 levels
+            {
+                level: 16,
+                title: "Bible Master Challenge",
+                questions: [
+                    {
+                        question: "Which book of the Bible contains the shortest verse?",
+                        answers: ["John", "Luke", "Matthew", "Mark"],
+                        correct: 0
+                    },
+                    {
+                        question: "How many books are in the entire Bible?",
+                        answers: ["64", "66", "68", "70"],
+                        correct: 1
+                    },
+                    {
+                        question: "Which king had the longest reign in the Bible?",
+                        answers: ["David", "Solomon", "Manasseh", "Saul"],
+                        correct: 2
+                    },
+                    {
+                        question: "What does 'Golgotha' mean?",
+                        answers: ["Hill of sorrow", "Place of the skull", "Mount of olives", "Valley of death"],
+                        correct: 1
+                    },
+                    {
+                        question: "Which prophet never died but was taken up to heaven?",
+                        answers: ["Elijah", "Enoch", "Both Elijah and Enoch", "Moses"],
+                        correct: 2
+                    },
+                    {
+                        question: "How many times is the word 'God' mentioned in the book of Esther?",
+                        answers: ["Never", "Once", "Seven times", "Twelve times"],
+                        correct: 0
+                    },
+                    {
+                        question: "Which apostle was present at Jesus' transfiguration, crucifixion, and in the garden of Gethsemane?",
+                        answers: ["John", "James", "Peter", "All of the above"],
+                        correct: 0
+                    },
+                    {
+                        question: "What was the color of the robe placed on Jesus?",
+                        answers: ["Blue", "Purple", "Red", "White"],
+                        correct: 1
+                    },
+                    {
+                        question: "How many generations are there from Abraham to Jesus according to Matthew?",
+                        answers: ["40", "42", "44", "46"],
+                        correct: 1
+                    },
+                    {
+                        question: "Which book comes after 2 Chronicles?",
+                        answers: ["Nehemiah", "Ezra", "Esther", "Job"],
+                        correct: 1
+                    }
+                ]
+            },
+        ];
+
+        // Initialize the game
+        function initGame() {
+            createLevelButtons();
+            showLevelSelection();
+            updateOverallProgress();
+            checkAchievements();
+            checkFinalVictory();
+        }
+
+        // Create level selection buttons
+        function createLevelButtons() {
+            const levelsGrid = document.getElementById('levelsGrid');
+            levelsGrid.innerHTML = '';
+
+            quizData.forEach((level, index) => {
+                const levelCard = document.createElement('button');
+                levelCard.className = 'level-card';
+                levelCard.innerHTML = `
+                    <div>Level ${level.level}</div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">${level.title}</div>
+                `;
+
+                if (completedLevels.includes(index)) {
+                    levelCard.classList.add('completed');
+                    levelCard.innerHTML += '<div style="position: absolute; top: 5px; right: 5px;">✅</div>';
+                } else if (index > 0 && index < 15 && !completedLevels.includes(index - 1)) {
+                    levelCard.classList.add('locked');
+                    levelCard.innerHTML += '<div style="position: absolute; top: 5px; right: 5px;">🔒</div>';
+                    levelCard.disabled = true;
+                } else if (index === 15 && completedLevels.length < 15) {
+                    // Bonus level - only unlock when all 15 levels are completed
+                    levelCard.classList.add('locked');
+                    levelCard.innerHTML += '<div style="position: absolute; top: 5px; right: 5px;">🔒</div>';
+                    levelCard.disabled = true;
+                }
+
+                if (!levelCard.disabled) {
+                    levelCard.onclick = () => startLevel(index);
+                }
+
+                levelsGrid.appendChild(levelCard);
+            });
+        }
+
+        // Show level selection screen
+        function showLevelSelection() {
+            document.getElementById('levelSelection').style.display = 'block';
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'none';
+        }
+
+        // Start a specific level
+        function startLevel(levelIndex) {
+            currentLevelIndex = levelIndex;
+            currentQuestionIndex = 0;
+            currentScore = 0;
+
+            document.getElementById('levelSelection').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'block';
+            document.getElementById('resultContainer').style.display = 'none';
+
+            updateStats();
+            loadQuestion();
+        }
+
+        // Update game statistics display
+        function updateStats() {
+            document.getElementById('currentLevel').textContent = quizData[currentLevelIndex].level;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('currentScore').textContent = currentScore;
+        }
+
+        // Load current question
+        function loadQuestion() {
+            const currentLevel = quizData[currentLevelIndex];
+            const currentQ = currentLevel.questions[currentQuestionIndex];
+
+            document.getElementById('questionText').textContent = currentQ.question;
+
+            const answersContainer = document.getElementById('answersContainer');
+            answersContainer.innerHTML = '';
+
+            currentQ.answers.forEach((answer, index) => {
+                const answerBtn = document.createElement('button');
+                answerBtn.className = 'answer-btn';
+                answerBtn.textContent = answer;
+                answerBtn.onclick = () => selectAnswer(index);
+                answersContainer.appendChild(answerBtn);
+            });
+
+            document.getElementById('nextBtn').disabled = true;
+            updateStats();
+        }
+
+        // Handle answer selection
+        function selectAnswer(selectedIndex) {
+            const currentLevel = quizData[currentLevelIndex];
+            const currentQ = currentLevel.questions[currentQuestionIndex];
+            const answerBtns = document.querySelectorAll('.answer-btn');
+
+            answerBtns.forEach((btn, index) => {
+                btn.classList.add('disabled');
+                btn.onclick = null;
+
+                if (index === currentQ.correct) {
+                    btn.classList.add('correct');
+                } else if (index === selectedIndex) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (selectedIndex === currentQ.correct) {
+                currentScore++;
+                gameStats.totalCorrect++;
+            }
+            
+            gameStats.totalQuestions++;
+            saveGameStats();
+
+            document.getElementById('nextBtn').disabled = false;
+            updateStats();
+        }
+
+        // Move to next question
+        function nextQuestion() {
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex >= quizData[currentLevelIndex].questions.length) {
+                showResults();
+            } else {
+                loadQuestion();
+            }
+        }
+
+        // Show level results
+        function showResults() {
+            const percentage = Math.round((currentScore / 10) * 100);
+            
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'block';
+            
+            document.getElementById('finalScore').textContent = `${currentScore}/10 (${percentage}%)`;
+
+            let message, emoji;
+            if (percentage >= 80) {
+                message = "Excellent! You have great knowledge of the Bible!";
+                emoji = "🎉";
+                if (!completedLevels.includes(currentLevelIndex)) {
+                    completedLevels.push(currentLevelIndex);
+                    localStorage.setItem('biblequiz_completed', JSON.stringify(completedLevels));
+                }
+                if (percentage === 100) {
+                    gameStats.perfectLevels++;
+                    saveGameStats();
+                }
+            } else if (percentage >= 60) {
+                message = "Good job! Keep studying God's Word!";
+                emoji = "👍";
+            } else {
+                message = "Keep reading and studying the Bible!";
+                emoji = "📖";
+            }
+
+            document.getElementById('resultMessage').textContent = message;
+            document.getElementById('celebrationEmoji').textContent = emoji;
+            
+            updateOverallProgress();
+            checkAchievements();
+            checkFinalVictory();
+        }
+
+        // Update overall progress bar
+        function updateOverallProgress() {
+            const regularLevelsCompleted = completedLevels.filter(level => level < 15).length;
+            const progress = (regularLevelsCompleted / 15) * 100;
+            document.getElementById('overallProgress').style.width = progress + '%';
+        }
+
+        // Check and unlock achievements
+        function checkAchievements() {
+            const newAchievements = [];
+            
+            // First Level Achievement
+            if (completedLevels.length >= 1 && !achievements.includes('first_level')) {
+                achievements.push('first_level');
+                newAchievements.push('🌟 Bible Journey Begins');
+            }
+            
+            // Half Way Achievement
+            if (completedLevels.filter(l => l < 15).length >= 8 && !achievements.includes('halfway')) {
+                achievements.push('halfway');
+                newAchievements.push('⭐ Bible Scholar');
+            }
+            
+            // All 15 Levels Achievement
+            if (completedLevels.filter(l => l < 15).length >= 15 && !achievements.includes('all_levels')) {
+                achievements.push('all_levels');
+                newAchievements.push('👑 Bible Master');
+            }
+            
+            // Perfect Score Achievement
+            if (gameStats.perfectLevels >= 5 && !achievements.includes('perfect_five')) {
+                achievements.push('perfect_five');
+                newAchievements.push('💎 Perfect Knowledge');
+            }
+            
+            // Bonus Level Achievement
+            if (completedLevels.includes(15) && !achievements.includes('bonus_complete')) {
+                achievements.push('bonus_complete');
+                newAchievements.push('🏆 Ultimate Bible Champion');
+            }
+            
+            if (newAchievements.length > 0) {
+                localStorage.setItem('biblequiz_achievements', JSON.stringify(achievements));
+            }
+        }
+
+        // Check if all levels completed for final victory
+        function checkFinalVictory() {
+            const regularLevelsCompleted = completedLevels.filter(level => level < 15).length;
+            
+            if (regularLevelsCompleted >= 15) {
+                document.getElementById('finalVictory').style.display = 'block';
+                document.getElementById('bonusUnlock').style.display = 'block';
+                
+                // Update final stats
+                const finalStats = document.getElementById('finalStats');
+                const accuracy = gameStats.totalQuestions > 0 ? Math.round((gameStats.totalCorrect / gameStats.totalQuestions) * 100) : 0;
+                
+                finalStats.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${regularLevelsCompleted}/15</div>
+                        <div>Levels Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${accuracy}%</div>
+                        <div>Overall Accuracy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${gameStats.perfectLevels}</div>
+                        <div>Perfect Scores</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${achievements.length}</div>
+                        <div>Achievements</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Show achievements
+        function showAchievements() {
+            const container = document.getElementById('achievementsContainer');
+            const list = document.getElementById('achievementsList');
+            
+            const allAchievements = [
+                { id: 'first_level', name: '🌟 Bible Journey Begins', desc: 'Complete your first level' },
+                { id: 'halfway', name: '⭐ Bible Scholar', desc: 'Complete 8 levels' },
+                { id: 'all_levels', name: '👑 Bible Master', desc: 'Complete all 15 levels' },
+                { id: 'perfect_five', name: '💎 Perfect Knowledge', desc: 'Get perfect scores on 5 levels' },
+                { id: 'bonus_complete', name: '🏆 Ultimate Bible Champion', desc: 'Complete the bonus level' }
+            ];
+            
+            list.innerHTML = '';
+            allAchievements.forEach(achievement => {
+                const div = document.createElement('div');
+                div.className = 'achievement';
+                if (achievements.includes(achievement.id)) {
+                    div.classList.add('unlocked');
+                }
+                
+                div.innerHTML = `
+                    <div class="achievement-icon">${achievement.name.split(' ')[0]}</div>
+                    <div>
+                        <div style="font-weight: bold;">${achievement.name.substring(2)}</div>
+                        <div style="font-size: 0.9em; opacity: 0.8;">${achievement.desc}</div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Show statistics
+        function showStats() {
+            const accuracy = gameStats.totalQuestions > 0 ? Math.round((gameStats.totalCorrect / gameStats.totalQuestions) * 100) : 0;
+            const regularLevelsCompleted = completedLevels.filter(level => level < 15).length;
+            
+            alert(`📊 Your Bible Quiz Statistics:
+            
+🎯 Levels Completed: ${regularLevelsCompleted}/15
+📈 Overall Accuracy: ${accuracy}%
+✅ Total Questions Answered: ${gameStats.totalQuestions}
+✨ Perfect Level Scores: ${gameStats.perfectLevels}
+🏆 Achievements Unlocked: ${achievements.length}/5
+            
+Keep studying God's Word!`);
+        }
+
+        // Reset entire game
+        function resetGame() {
+            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                localStorage.removeItem('biblequiz_completed');
+                localStorage.removeItem('biblequiz_achievements');
+                localStorage.removeItem('biblequiz_stats');
+                
+                completedLevels = [];
+                achievements = [];
+                gameStats = {"totalQuestions": 0, "totalCorrect": 0, "perfectLevels": 0};
+                
+                document.getElementById('finalVictory').style.display = 'none';
+                document.getElementById('bonusUnlock').style.display = 'none';
+                document.getElementById('achievementsContainer').style.display = 'none';
+                
+                initGame();
+            }
+        }
+
+        // Save game statistics
+        function saveGameStats() {
+            localStorage.setItem('biblequiz_stats', JSON.stringify(gameStats));
+        }
+
+        // Retry current level
+        function retryLevel() {
+            startLevel(currentLevelIndex);
+        }
+
+        // Go back to level selection
+        function backToLevels() {
+            createLevelButtons();
+            showLevelSelection();
+        }
+
+        // Initialize the game when page loads
+        window.onload = initGame;
+    </script>
+</body>
+</html>
